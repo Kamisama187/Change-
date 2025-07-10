@@ -195,7 +195,7 @@ def process_cards(message, file_path, user_id, ko):
                     last = "Your card was declined."
 
                 # Update counts based on response
-                if "Donation Successful! " in last:
+                if "Success" in last:
                     ck += 1
                     charged_message = generate_charged_message(cc, "Approved", bin_info, "4.6")
                     bot.send_message(message.chat.id, charged_message)  # Send to user's DM

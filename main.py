@@ -1,0 +1,253 @@
+#Dev = @im_satyam_chauhan
+#Channel = @satyamnetwork
+# Copy kro Bs Credit De dena Dost 
+import os
+import threading
+import requests
+import telebot
+from telebot import types
+from gate import Tele  # Import the Tele function from gatet.py
+
+# Bot configurat
+BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')  # Replace with your bot token
+OWNER_ID = os.getenv('OWNER_ID')
+
+# Initialize the bot
+bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
+
+# File paths
+APPROVED_USERS_FILE = "approved_users.txt"
+BANNED_USERS_FILE = "banned_users.txt"
+
+# Global state
+processing = {}
+stop_processing = {}
+approved_users = set()
+
+# Load approved users from file
+def load_approved_users():
+    try:
+        with open(APPROVED_USERS_FILE, "r") as file:
+            return set(line.strip() for line in file.readlines())
+    except FileNotFoundError:
+        return set()
+
+# Load banned users from file
+def load_banned_users():
+    try:
+        with open(BANNED_USERS_FILE, "r") as file:
+            return set(line.strip() for line in file.readlines())
+    except FileNotFoundError:
+        return set()
+
+# Save approved user to file
+def add_approved_user(user_id):
+    with open(APPROVED_USERS_FILE, "a") as file:
+        file.write(f"{user_id}\n")
+
+# Ban a user
+def ban_user(user_id):
+    with open(BANNED_USERS_FILE, "a") as file:
+        file.write(f"{user_id}\n")
+
+# Generate approved card message
+def generate_charged_message(cc, response, bin_info, time_taken):
+    return f"""
+𝘾𝙝𝙖𝙧𝙜𝙚𝙙 🔥 
+──────────────────                
+𝘾𝙖𝙧𝙙 : <code>{cc}</code>
+[↯] 𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲 : 𝘿𝙤𝙣𝙖𝙩𝙞𝙤𝙣 𝙎𝙪𝙘𝙘𝙚𝙨𝙨𝙛𝙪𝙡! 🔥
+[↯] 𝗚𝗮𝘁𝗲𝘄𝗮𝘆 : 𝗦𝘁𝗿𝗶𝗽𝗲 0.3$ 
+[↯] 𝙄𝙣𝙛𝙤 : {bin_info.get('type', 'Unknown')} - {bin_info.get('brand', 'Unknown')} - {bin_info.get('level', 'Unknown')}
+[↯] 𝘾𝙤𝙪𝙣𝙩𝙧𝙮 : {bin_info.get('country_name', 'Unknown')} - {bin_info.get('country_flag', '')}
+[↯] 𝙄𝙨𝙨𝙪𝙚𝙧 : {bin_info.get('bank', 'Unknown')}
+[↯] 𝘽𝙞𝙣 : {cc[:6]}
+[↯] 𝙏𝙞𝙢𝙚 : {time_taken}
+[↯] 𝗕𝗼𝘁 𝗕𝘆: @Kamisama_hm
+──────────────────
+"""
+def generate_approved_message(cc, response, bin_info, time_taken):
+    return f"""
+𝘼𝙥𝙥𝙧𝙤𝙫𝙚𝙙 ✅
+──────────────────                
+𝘾𝙖𝙧𝙙 : <code>{cc}</code>
+[↯] 𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲 : 𝘼𝙋𝙋𝙍𝙊𝙑𝙀𝘿 ✅
+[↯] 𝗚𝗮𝘁𝗲𝘄𝗮𝘆 : 𝗦𝘁𝗿𝗶𝗽𝗲 0.3$
+[↯] 𝙄𝙣𝙛𝙤 : {bin_info.get('type', 'Unknown')} - {bin_info.get('brand', 'Unknown')} - {bin_info.get('level', 'Unknown')}
+[↯] 𝘾𝙤𝙪𝙣𝙩𝙧𝙮 : {bin_info.get('country_name', 'Unknown')} - {bin_info.get('country_flag', '')}
+[↯] 𝙄𝙨𝙨𝙪𝙚𝙧 : {bin_info.get('bank', 'Unknown')}
+[↯] 𝘽𝙞𝙣 : {cc[:6]}
+[↯] 𝙏𝙞𝙢𝙚 : {time_taken}
+[↯] 𝗕𝗼𝘁 𝗕𝘆: @Kamisama_hm
+──────────────────
+"""
+
+# Handle /start command
+@bot.message_handler(commands=["start"])
+def start(message):
+    user_id = str(message.from_user.id)
+    if user_id in load_banned_users():
+        bot.reply_to(message, "𝗬𝗼𝘂 𝗔𝗿𝗲 𝗙𝘂𝗰𝗸𝗲𝗱 🖕")
+        return
+    if user_id not in load_approved_users():
+        bot.reply_to(message, "𝘠𝘰𝘶 𝘢𝘳𝘦 𝘯𝘰𝘵 𝘢𝘱𝘱𝘳𝘰𝘷𝘦𝘥 𝘵𝘰 𝘶𝘴𝘦 𝘵𝘩𝘪𝘴 𝘣𝘰𝘵. 𝘊𝘰𝘯𝘵𝘢𝘤𝘵 𝘵𝘩𝘦 𝘰𝘸𝘯𝘦𝘳- @Kamisama_hm")
+        return
+    bot.reply_to(message, "𝗦𝗲𝗻𝗱 𝗧𝗵𝗲 𝗙𝗶𝗹𝗲 𝗧𝗼 𝗖𝗵𝗲𝗰𝗸 ✔️")
+
+# Handle /add command (owner only)
+@bot.message_handler(commands=["add"])
+def add_user(message):
+    if message.from_user.id != OWNER_ID:
+        bot.reply_to(message, "𝗙𝘂𝗰𝗸 𝗬𝗼𝘂 𝗞𝗶𝗱💀")
+        return
+    try:
+        user_id_to_add = message.text.split()[1]
+        add_approved_user(user_id_to_add)
+        approved_users.add(user_id_to_add)
+        bot.reply_to(message, f"𝗨𝘀𝗲𝗿 {user_id_to_add} 𝐡𝐚𝐬 𝐛𝐞𝐞𝐧 𝐚𝐩𝐩𝐫𝐨𝐯𝐞𝐝.")
+    except IndexError:
+        bot.reply_to(message, "𝗣𝗿𝗼𝘃𝗶𝗱𝗲 𝗮 𝘂𝘀𝗲𝗿 𝗜𝗗 𝗧𝗼  𝗮𝗽𝗽𝗿𝗼𝘃𝗲.")
+
+# Handle /ban command (owner only)
+@bot.message_handler(commands=["ban"])
+def ban_user_command(message):
+    if message.from_user.id != OWNER_ID:
+        bot.reply_to(message, "𝗙𝘂𝗰𝗸 𝗬𝗼𝘂 𝗞𝗶𝗱💀")
+        return
+    try:
+        user_id_to_ban = message.text.split()[1]
+        ban_user(user_id_to_ban)
+        bot.reply_to(message, f"𝗨𝘀𝗲𝗿 {user_id_to_ban} 𝐡𝐚𝐬 𝐛𝐞𝐞𝐧 𝗕𝗮𝗻𝗻𝗲𝗱.")
+    except IndexError:
+        bot.reply_to(message, "𝗣𝗿𝗼𝘃𝗶𝗱𝗲 𝗮 𝘂𝘀𝗲𝗿 𝗜𝗗 𝘁𝗼 𝗯𝗮𝗻..")
+
+# Handle document upload
+@bot.message_handler(content_types=["document"])
+def handle_document(message):
+    user_id = str(message.from_user.id)
+    if user_id in load_banned_users():
+        bot.reply_to(message, "𝘠𝘰𝘶 𝘢𝘳𝘦 𝘯𝘰𝘵 𝘢𝘱𝘱𝘳𝘰𝘷𝘦𝘥 𝘵𝘰 𝘶𝘴𝘦 𝘵𝘩𝘪𝘴 𝘣𝘰𝘵. 𝘊𝘰𝘯𝘵𝘢𝘤𝘵 𝘵𝘩𝘦 𝘰𝘸𝘯𝘦𝘳- @Kamisama_hm")
+        return
+    if user_id not in load_approved_users():
+        bot.reply_to(message, "𝘊𝘰𝘯𝘵𝘢𝘤𝘵 𝘵𝘩𝘦 𝘰𝘸𝘯𝘦𝘳- @Kamisama_hm")
+        return
+
+    if processing.get(user_id, False):
+        bot.reply_to(message, "𝗣𝗹𝗲𝗮𝘀𝗲 𝘄𝗮𝗶𝘁! 𝗬𝗼𝘂𝗿 𝗽𝗿𝗲𝘃𝗶𝗼𝘂𝘀 𝗳𝗶𝗹𝗲 𝗶𝘀 𝘀𝘁𝗶𝗹𝗹 𝗯𝗲𝗶𝗻𝗴 𝗽𝗿𝗼𝗰𝗲𝘀𝘀𝗲𝗱. ⏳.")
+        return
+
+    processing[user_id] = True
+    stop_processing[user_id] = False
+
+    # Download the file
+    file_info = bot.get_file(message.document.file_id)
+    downloaded_file = bot.download_file(file_info.file_path)
+    file_path = f"combo_{user_id}.txt"
+    with open(file_path, "wb") as file:
+        file.write(downloaded_file)
+
+    # Start processing
+    ko = bot.reply_to(message, "𝘊𝘰𝘯𝘯𝘦𝘤𝘵𝘪𝘯𝘨 𝘕𝘦𝘵𝘸𝘰𝘳𝘬 𝘛𝘰 𝘊𝘩𝘦𝘤𝘬 𝘊𝘢𝘳𝘥𝘴.....⏳.").message_id
+    threading.Thread(target=process_cards, args=(message, file_path, user_id, ko)).start()
+
+# Process cards
+def process_cards(message, file_path, user_id, ko):
+    dd = 0
+    ck = 0
+    ch = 0
+    try:
+        with open(file_path, "r") as file:
+            lines = file.readlines()
+            total = len(lines)
+
+            for cc in lines:
+                if stop_processing.get(user_id, False):
+                    bot.send_message(message.chat.id, "🛑 𝙋𝙧𝙤𝙘𝙚𝙨𝙨𝙞𝙣𝙜 𝙎𝙩𝙤𝙥𝙥𝙚𝙙 𝙗𝙮 𝙪𝙨𝙚𝙧.")
+                    break
+
+                cc = cc.strip()
+                # Perform BIN lookup
+                bin_info = {}
+                try:
+                    bin_data_url = f"https://bins.antipublic.cc/bins/{cc[:6]}"
+                    bin_info = requests.get(bin_data_url).json()
+                except Exception as e:
+                    print(f"BIN Lookup Error: {e}")
+
+                # Inline keyboard with Stop button
+                mes = types.InlineKeyboardMarkup(row_width=1)
+                cm1 = types.InlineKeyboardButton(f"• ➼ {cc} •", callback_data='u8')
+               # cm6 = types.InlineKeyboardButton(f"•RESP ➼  •", callback_data='u8')
+                cm2 = types.InlineKeyboardButton(f"• 𝘾𝙝𝙖𝙧𝙜𝙚𝙙 🔥: [ {ck} ] •", callback_data='x')
+                cm3 = types.InlineKeyboardButton(f"• 𝗔𝗽𝗽𝗿𝗼𝘃𝗲𝗱 ✅: [ {ch} ] •", callback_data='x')
+                cm4 = types.InlineKeyboardButton(f"• 𝗗𝗲𝗮𝗱 ❌: [ {dd} ] •", callback_data='x')
+                cm5 = types.InlineKeyboardButton(f"• 𝗧𝗼𝘁𝗮𝗹 💳: [ {total} ] •", callback_data='x')
+                stop_btn = types.InlineKeyboardButton("[ 𝗦𝘁𝗼𝗽 🛑 ] ", callback_data='stop_process')
+                mes.add(cm1, cm2, cm3, cm4, cm5, stop_btn)
+
+                bot.edit_message_text(chat_id=message.chat.id, message_id=ko, text='''𝘾𝙃𝙀𝘾𝙆𝙄𝙉𝙂 𝙔𝙊𝙐𝙍 𝘾𝘼𝙍𝘿𝙎...''', reply_markup=mes)
+
+                # Process card using Tele function
+                try:
+                    last = str(Tele(cc))  # Use the Tele function from gatet.py
+                except Exception as e:
+                    print(e)
+                    last = "Your card was declined."
+
+                # Update counts based on response
+                if "Donation Successful! " in last:
+                    ck += 1
+                    charged_message = generate_charged_message(cc, "Approved", bin_info, "4.6")
+                    bot.send_message(message.chat.id, charged_message)  # Send to user's DM
+                
+                elif "Your card has insufficient funds." in last or "Your card does not support this type of purchase." in last:
+                    ch += 1
+                    approved_message = generate_approved_message(cc, "Approved", bin_info, "4.6")
+                    bot.send_message(message.chat.id, approved_message)
+                
+                else:
+                    dd += 1
+
+                # Update the portal with current counts
+                mes = types.InlineKeyboardMarkup(row_width=1)
+                cm1 = types.InlineKeyboardButton(f"• ➼ {cc} •", callback_data='u8')
+                #cm6 = types.InlineKeyboardButton(f"• ➼ {last} •", callback_data='u8')
+                cm2 = types.InlineKeyboardButton(f"• 𝘾𝙝𝙖𝙧𝙜𝙚𝙙 🔥: [ {ck} ] •", callback_data='x')
+                cm3 = types.InlineKeyboardButton(f"• 𝗔𝗽𝗽𝗿𝗼𝘃𝗲𝗱 ✅: [ {ch} ] •", callback_data='x')
+                cm4 = types.InlineKeyboardButton(f"• 𝗗𝗲𝗮𝗱 ❌: [ {dd} ] •", callback_data='x')
+                cm5 = types.InlineKeyboardButton(f"• 𝗧𝗼𝘁𝗮𝗹 💳: [ {total} ] •", callback_data='x')
+                stop_btn = types.InlineKeyboardButton("[ 𝗦𝘁𝗼𝗽 🛑 ] ", callback_data='stop_process')
+                mes.add(cm1, cm2, cm3, cm4, cm5, stop_btn)
+
+                bot.edit_message_text(chat_id=message.chat.id, message_id=ko, text='''𝘾𝙃𝙀𝘾𝙆𝙄𝙉𝙂 𝙔𝙊𝙐𝙍 𝘾𝘼𝙍𝘿𝙎...''', reply_markup=mes)
+
+    except Exception as e:
+        print(f"Error processing cards: {e}")
+    finally:
+        processing[user_id] = False
+        stop_processing[user_id] = False
+        bot.send_message(message.chat.id, "✅ 𝘾𝙝𝙚𝙘𝙠𝙞𝙣𝙜 𝙘𝙤𝙢𝙥𝙡𝙚𝙩𝙚! 𝙔𝙤𝙪 𝙘𝙖𝙣 𝙣𝙤𝙬 𝙨𝙚𝙣𝙙 𝙖 𝙣𝙚𝙬 𝙛𝙞𝙡𝙚.")
+
+# Handle stop button
+@bot.callback_query_handler(func=lambda call: call.data == 'stop_process')
+def stop_processing_callback(call):
+    user_id = str(call.from_user.id)
+    if user_id in processing and processing[user_id]:
+        stop_processing[user_id] = True
+        bot.answer_callback_query(call.id, "Processing has been stopped.")
+    else:
+        bot.answer_callback_query(call.id, "No ongoing processing to stop.")
+
+# Handle /status command
+@bot.message_handler(commands=["status"])
+def status(message):
+    user_id = str(message.from_user.id)
+    if user_id in processing and processing[user_id]:
+        bot.reply_to(message, "𝙔𝙤𝙪𝙧 𝙛𝙞𝙡𝙚 𝙞𝙨 𝙨𝙩𝙞𝙡𝙡 𝙗𝙚𝙞𝙣𝙜 𝙥𝙧𝙤𝙘𝙚𝙨𝙨𝙚𝙙. 𝙋𝙡𝙚𝙖𝙨𝙚 𝙬𝙖𝙞𝙩.")
+    else:
+        bot.reply_to(message, "𝙉𝙤 𝙛𝙞𝙡𝙚 𝙥𝙧𝙤𝙘𝙚𝙨𝙨𝙞𝙣𝙜 𝙞𝙣 𝙥𝙧𝙤𝙜𝙧𝙚𝙨𝙨 𝙖𝙩 𝙩𝙝𝙚 𝙢𝙤𝙢𝙚𝙣𝙩.")
+
+# Start the bot
+print("running......")
+#print(last)
+bot.polling(none_stop=True)

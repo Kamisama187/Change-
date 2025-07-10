@@ -10,7 +10,7 @@ from gate import Tele  # Import the Tele function from gatet.py
 
 # Bot configurat
 BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')  # Replace with your bot token
-OWNER_ID = os.getenv('OWNER_ID')
+OWNER_ID = 5272811285
 
 # Initialize the bot
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")

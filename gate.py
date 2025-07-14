@@ -77,7 +77,7 @@ def Tele(ccx):
     'wpfs-card-holder-name': name,
     'wpfs-stripe-payment-method-id': pm,
 }
-    #time.sleep(0.5)
+    time.sleep(0.3)
     responsey = requests.post(
     'https://limestonecoastsustainablefutures.com.au/wp-admin/admin-ajax.php',
     headers=headers,

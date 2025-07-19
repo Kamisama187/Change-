@@ -29,7 +29,7 @@ def Tele(ccx):
     "http": proxy,
     }
     data = {
-    "billing_details[email]": "kamisamakami252@gmail.com",
+    "billing_details[email]": "kamisamakami2521@gmail.com",
     "billing_details[name]": name,
     "billing_details[address][postal_code]": "80123",
     "billing_details[address][country]": "US",
@@ -73,7 +73,7 @@ def Tele(ccx):
     'wpfs-custom-amount': 'other',
     'wpfs-custom-amount-unique': '0.3',
     'wpfs-donation-frequency': 'one-time',
-    'wpfs-card-holder-email': 'kamisamakami252@gmail.com',
+    'wpfs-card-holder-email': 'kamisamakami2521@gmail.com',
     'wpfs-card-holder-name': name,
     'wpfs-stripe-payment-method-id': pm,
 }

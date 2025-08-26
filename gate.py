@@ -8,9 +8,7 @@ import base64
 import asyncio
 
 proxies_list = [
-    "http://qlpowtam-rotate:skbb6fly11gl@p.webshare.io:80",
-    "http://gpeprqkm-rotate:2qzjcjbj0pml@p.webshare.io:80",
-    "http://bwzexlib-rotate:snasn9oyfzsa@p.webshare.io:80"
+    "http://nhvqrrwe-rotate:g4ze5sjuvs5o@p.webshare.io:80"
 ]
 
 names = ["John", "Emma", "Liam", "Olivia", "Smith", "Brown", "Davis", "Jones"]
